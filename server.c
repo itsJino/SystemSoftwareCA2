@@ -16,7 +16,7 @@
  int active_clients = 0;
  
  /* Main function */
- int main(int argc, char *argv[]) {
+ int main(void) {
      int server_socket, client_socket;
      struct sockaddr_in client_addr;
      socklen_t client_addr_len = sizeof(client_addr);
@@ -130,7 +130,7 @@
  void *handle_client(void *arg) {
      client_t *client = (client_t *)arg;
      int client_socket = client->client_socket;
-     char buffer[BUFFER_SIZE] = {0};
+     int client_id = client->client_id;
      char username[64] = {0};
      char target_dir[64] = {0};
      char filename[MAX_PATH_LENGTH] = {0};
@@ -171,11 +171,11 @@
      /* Clean up after client handling */
  cleanup:
      close(client_socket);
-     free(client);
      active_clients--;
      
-     printf("Client %d disconnected. Total active clients: %d\n", client->client_id, active_clients);
+     printf("Client %d disconnected. Total active clients: %d\n", client_id, active_clients);
      
+     free(client);
      pthread_exit(NULL);
  }
  
@@ -205,7 +205,11 @@
          return STATUS_PERMISSION_DENIED;
      }
      
-     /* Create the target file path */
+     /* Create the target file path - ensure there's room for the path separator and null terminator */
+     if (strlen(full_target_dir) + strlen(filename) + 2 > MAX_PATH_LENGTH) {
+         fprintf(stderr, "Path too long: %s/%s\n", full_target_dir, filename);
+         return STATUS_FILE_ERROR;
+     }
      snprintf(target_path, MAX_PATH_LENGTH, "%s/%s", full_target_dir, filename);
      
      /* Receive file size */

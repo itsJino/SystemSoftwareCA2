@@ -57,7 +57,7 @@
  int initialize_server(void);
  
  /* Handle client connection in a separate thread */
- void *handle_client(void *arg);
+ void *handle_client(void *arg) __attribute__((noreturn));
  
  /* Process file transfer request from client */
  int process_file_transfer(int client_socket, const char *username, const char *target_dir, const char *filename);
